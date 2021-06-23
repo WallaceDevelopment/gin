@@ -1,7 +1,6 @@
 package gin.test;
 
 import java.lang.management.*;
-import java.util.ArrayList;
 
 
 import org.junit.runner.Description;
@@ -19,6 +18,10 @@ import org.pmw.tinylog.Logger;
 public class TestRunListener extends RunListener {
 
     private static final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+
+    private static final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+
+    private static final MemoryProfiler memoryProfiler = new MemoryProfiler();
 
     private static final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
@@ -50,35 +53,21 @@ public class TestRunListener extends RunListener {
         unitTestResult.addFailure(failure);
     }
 
-//    public long getAveragePeak(){
-//        long totalPeak = 0;
-//        for (MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans()) {
-//            totalPeak += pool.getPeakUsage().getUsed();
-//        }
-//
-//        return totalPeak / ManagementFactory.getMemoryPoolMXBeans().size();
-//        }
-
-
-    // here we could also introduce JProfiler,
-    // where it starts a probe at testStart, finishes at testFinished and reports back?
     public void testFinished(Description description) throws Exception {
+//        memoryProfiler.stop();
         Logger.debug("Test " + description + " finished.");
         long endTime = System.nanoTime();
         long endCPUTime = threadMXBean.getCurrentThreadCpuTime();
 
-        // Gets used memory (bytes)
-        long endMemoryUsage = memoryMXBean.getHeapMemoryUsage().getUsed();
 
+
+        long endMemoryUsage = memoryMXBean.getHeapMemoryUsage().getUsed();
+//        memoryProfiler.resetStats();
         unitTestResult.setExecutionTime(endTime - startTime);
         unitTestResult.setCPUTime(endCPUTime - startCPUTime);
-
-        // Subtracts used memory at end from maximum JVM memory threshold
-        // Convert to megabytes
-        // https://stackoverflow.com/questions/37916136/how-to-calculate-memory-usage-of-a-java-program
         unitTestResult.setMemoryUsage(bytesToMegabytes(Math.abs(endMemoryUsage - startMemoryUsage)));
+        System.out.printf("Memory Usage %s%n", (Math.abs(endMemoryUsage - startMemoryUsage)));
     }
-
 
 
     public void testIgnored(Description description) throws Exception {
@@ -92,7 +81,7 @@ public class TestRunListener extends RunListener {
     }
 
     public void testRunStarted(Description description) throws Exception {
-        assert(description.testCount() == 1);
+        assert (description.testCount() == 1);
     }
 
 //    public long getAverageMemory() {
@@ -110,7 +99,6 @@ public class TestRunListener extends RunListener {
 //    }
 
 
-
     public void testStarted(Description description) throws Exception {
         Logger.debug("Test " + description + " started.");
         this.startTime = System.nanoTime();
@@ -118,6 +106,21 @@ public class TestRunListener extends RunListener {
 
         // Get total committed memory for JVM
         this.startMemoryUsage = memoryMXBean.getHeapMemoryUsage().getMax();
+
+//        memoryProfiler.setProcessID(getProcessID());
+//        memoryProfiler.start();
     }
 
+
+    private long getProcessID() {
+        // Get name representing the running Java virtual machine.
+        // It returns something like 6460@AURORA. Where the value
+        // before the @ symbol is the PID.
+        String jvmName = runtimeMXBean.getName();
+
+        // Extract the PID by splitting the string returned by the
+        // bean.getName() method.
+        long pid = Long.valueOf(jvmName.split("@")[0]);
+        return pid;
+    }
 }
