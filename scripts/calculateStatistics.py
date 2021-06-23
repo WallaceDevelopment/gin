@@ -39,7 +39,7 @@ def memory_usage(sorted_fitness_list):
 for test_number in range(100):
     import csv
 
-    with open('/Users/wallace/ssbseChallenge2019/gson/samples/sampler_results{}.csv'.format(test_number), 'r') as file:
+    with open('samples/sampler_results{}.csv'.format(test_number), 'r') as file:
         reader = csv.reader(file)
 
         # Sort by FitnessImprovement
