@@ -33,6 +33,8 @@ public class TestRunListener extends RunListener {
 
     private long startMemoryUsage = 0;
 
+    private long maxMemoryUsage = 0;
+
     private static final long MEGABYTE = 1024L * 1024L;
 
     public static long bytesToMegabytes(long bytes) {
@@ -59,14 +61,14 @@ public class TestRunListener extends RunListener {
         long endTime = System.nanoTime();
         long endCPUTime = threadMXBean.getCurrentThreadCpuTime();
 
-
-
         long endMemoryUsage = memoryMXBean.getHeapMemoryUsage().getUsed();
 //        memoryProfiler.resetStats();
         unitTestResult.setExecutionTime(endTime - startTime);
         unitTestResult.setCPUTime(endCPUTime - startCPUTime);
-        unitTestResult.setMemoryUsage(bytesToMegabytes(Math.abs(endMemoryUsage - startMemoryUsage)));
-        System.out.printf("Memory Usage %s%n", (Math.abs(endMemoryUsage - startMemoryUsage)));
+        long startStopAverageUsage = ((endMemoryUsage + startMemoryUsage) / 2);
+        unitTestResult.setMemoryUsage(bytesToMegabytes(Math.abs(maxMemoryUsage - startStopAverageUsage)));
+//        unitTestResult.setMemoryUsage(bytesToMegabytes(Math.abs(endMemoryUsage - startMemoryUsage)));
+        System.out.printf("Memory Usage %s%n", Math.abs(maxMemoryUsage - startStopAverageUsage));
     }
 
 
@@ -105,7 +107,8 @@ public class TestRunListener extends RunListener {
         this.startCPUTime = threadMXBean.getCurrentThreadCpuTime();
 
         // Get total committed memory for JVM
-        this.startMemoryUsage = memoryMXBean.getHeapMemoryUsage().getMax();
+        this.maxMemoryUsage = memoryMXBean.getHeapMemoryUsage().getMax();
+        this.startMemoryUsage = memoryMXBean.getHeapMemoryUsage().getUsed();
 
 //        memoryProfiler.setProcessID(getProcessID());
 //        memoryProfiler.start();
