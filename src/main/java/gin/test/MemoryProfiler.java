@@ -16,19 +16,17 @@ public class MemoryProfiler implements Runnable {
     private long medianMemoryUsage;
     private long maxJVMMemory;
     private ArrayList<Long> memorySamples;
+    private Thread t;
     private boolean running;
-//    private Thread t;
-    private static final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-    private static final Runtime runtime = Runtime.getRuntime();
-    private static final List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
 
 
     public MemoryProfiler(){
         processID = 0;
-        peakMemoryUsage = -1;
-        medianMemoryUsage = -1;
+        peakMemoryUsage = 0;
+        medianMemoryUsage = 0;
         memorySamples = new ArrayList<>();
-        maxJVMMemory = -1;
+        maxJVMMemory = 0;
+        running = true;
     }
 
     /* ======= GETTERS ======= */
@@ -45,63 +43,52 @@ public class MemoryProfiler implements Runnable {
     /* ======== Profiling Functions ======= */
 
     public void resetStats(){
+
+        this.t = new Thread(this);
+        this.t.start();
+
+
         processID = 0;
-        peakMemoryUsage = -1;
+        peakMemoryUsage = 0;
         memorySamples = new ArrayList<>();
-        medianMemoryUsage = -1;
-        maxJVMMemory = -1;
+        medianMemoryUsage = 0;
+        maxJVMMemory = 0;
     }
 
     private void updateStats() {
+
+        MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+
         long memorySamplesSum = 0;
-        long memorySamplesPoolSum = 0;
-        ArrayList<Long> memorySamplesPool = new ArrayList<>();
+        memorySamples.add(memoryMXBean.getHeapMemoryUsage().getUsed());
 
-        for (MemoryPoolMXBean usedMemorySample : memoryPoolMXBeans){
-            memorySamplesPool.add(usedMemorySample.getUsage().getUsed());
+        for (long sample : memorySamples){
+            memorySamplesSum += sample;
         }
 
-        // average across all memory pools
-        for (long sample : memorySamplesPool) {
-            memorySamplesPoolSum += sample;
-        }
-
-        memorySamplesSum = memorySamplesPoolSum / memoryPoolMXBeans.size();
-        memorySamples.add(memorySamplesSum);
         medianMemoryUsage = memorySamplesSum / memorySamples.size();
     }
 
     // Call updateStats function every .1 second
+    @Override
     public void run() {
-        while (running) {
+        while(running){
             try {
                 updateStats();
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 System.exit(1);
             }
-
         }
     }
 
-    // Functions to control profiling
-    public void start(){
-
-        running = true;
-//        t.start();
-        maxJVMMemory = memoryMXBean.getHeapMemoryUsage().getMax();
-//        maxJVMMemory = runtime.maxMemory();
-
-    }
-
-    public void stop(){
-        if (running){
-//            t.stop();
-            running = false;
-        }
+    public static void main(String[] args){
+        new MemoryProfiler();
     }
 }
+
+
 
 
 

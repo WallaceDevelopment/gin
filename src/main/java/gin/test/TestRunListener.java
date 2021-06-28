@@ -1,6 +1,7 @@
 package gin.test;
 
 import java.lang.management.*;
+import java.util.ArrayList;
 
 
 import org.junit.runner.Description;
@@ -23,6 +24,8 @@ public class TestRunListener extends RunListener {
 
     private static final MemoryProfiler memoryProfiler = new MemoryProfiler();
 
+    private static final MemoryProfiler2 memoryProfiler2 = new MemoryProfiler2();
+
     private static final MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
     private final UnitTestResult unitTestResult;
@@ -34,6 +37,8 @@ public class TestRunListener extends RunListener {
     private long startMemoryUsage = 0;
 
     private long maxMemoryUsage = 0;
+
+    private long medianMemory = 0;
 
     private static final long MEGABYTE = 1024L * 1024L;
 
@@ -56,19 +61,24 @@ public class TestRunListener extends RunListener {
     }
 
     public void testFinished(Description description) throws Exception {
-//        memoryProfiler.stop();
         Logger.debug("Test " + description + " finished.");
+
         long endTime = System.nanoTime();
         long endCPUTime = threadMXBean.getCurrentThreadCpuTime();
-
         long endMemoryUsage = memoryMXBean.getHeapMemoryUsage().getUsed();
-//        memoryProfiler.resetStats();
+        long startStopAverageUsage = ((endMemoryUsage + startMemoryUsage) / 2);
+        long averageMemoryUsage = memoryProfiler.getMedianMemoryUsage();
+
         unitTestResult.setExecutionTime(endTime - startTime);
         unitTestResult.setCPUTime(endCPUTime - startCPUTime);
-        long startStopAverageUsage = ((endMemoryUsage + startMemoryUsage) / 2);
-        unitTestResult.setMemoryUsage(bytesToMegabytes(Math.abs(maxMemoryUsage - startStopAverageUsage)));
+        unitTestResult.setMemoryUsage(bytesToMegabytes(Math.abs(averageMemoryUsage)));
 //        unitTestResult.setMemoryUsage(bytesToMegabytes(Math.abs(endMemoryUsage - startMemoryUsage)));
-        System.out.printf("Memory Usage %s%n", Math.abs(maxMemoryUsage - startStopAverageUsage));
+
+        System.out.printf("Max Memory Usage %s%n", maxMemoryUsage);
+        System.out.printf("Memory Usage %s%n", Math.abs(startStopAverageUsage));
+        System.out.printf("Profiler Memory Usage %s%n", averageMemoryUsage);
+
+
     }
 
 
@@ -111,8 +121,10 @@ public class TestRunListener extends RunListener {
         this.startMemoryUsage = memoryMXBean.getHeapMemoryUsage().getUsed();
 
 //        memoryProfiler.setProcessID(getProcessID());
-//        memoryProfiler.start();
+        memoryProfiler.resetStats();
     }
+
+
 
 
     private long getProcessID() {
