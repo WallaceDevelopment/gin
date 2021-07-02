@@ -2,6 +2,7 @@ package gin.test;
 
 import java.lang.management.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -15,25 +16,30 @@ public class MemoryProfiler implements Runnable {
     private long peakMemoryUsage;
     private long medianMemoryUsage;
     private long maxJVMMemory;
-    private ArrayList<Long> memorySamples;
+    private List<Long> memorySamples;
     private Thread t;
-    private boolean running;
+    private volatile boolean running;
 
 
     public MemoryProfiler(){
         processID = 0;
         peakMemoryUsage = 0;
         medianMemoryUsage = 0;
-        memorySamples = new ArrayList<>();
+        memorySamples = Collections.synchronizedList(new ArrayList<>());
         maxJVMMemory = 0;
-        running = true;
     }
 
     /* ======= GETTERS ======= */
 
     public long getPeakMemoryUsage() { return peakMemoryUsage; }
 
-    public long getMedianMemoryUsage() { return medianMemoryUsage; }
+    public long getMedianMemoryUsage() {
+        long memorySamplesSum = 0;
+        for (long sample : memorySamples){
+            memorySamplesSum += sample;
+        }
+        return memorySamplesSum / memorySamples.size();
+    }
 
     public long getMaxJVMMemory() { return maxJVMMemory; }
 
@@ -43,30 +49,38 @@ public class MemoryProfiler implements Runnable {
     /* ======== Profiling Functions ======= */
 
     public void resetStats(){
-
-        this.t = new Thread(this);
-        this.t.start();
-
-
         processID = 0;
         peakMemoryUsage = 0;
-        memorySamples = new ArrayList<>();
         medianMemoryUsage = 0;
+        memorySamples = Collections.synchronizedList(new ArrayList<>());
         maxJVMMemory = 0;
     }
 
+    public void stop(){
+        running = false;
+    }
+
+    public void start(){
+        // try out instantiating vars here, remove if no build
+        processID = 0;
+        peakMemoryUsage = 0;
+        medianMemoryUsage = 0;
+        memorySamples = Collections.synchronizedList(new ArrayList<>());
+        maxJVMMemory = 0;
+
+
+        this.t = new Thread(this);
+        this.t.start();
+        running = true;
+    }
+
     private void updateStats() {
-
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-
-        long memorySamplesSum = 0;
         memorySamples.add(memoryMXBean.getHeapMemoryUsage().getUsed());
+    }
 
-        for (long sample : memorySamples){
-            memorySamplesSum += sample;
-        }
-
-        medianMemoryUsage = memorySamplesSum / memorySamples.size();
+    private boolean getRunning(){
+        return running;
     }
 
     // Call updateStats function every .1 second
@@ -74,8 +88,11 @@ public class MemoryProfiler implements Runnable {
     public void run() {
         while(running){
             try {
+                if (!getRunning()){
+                    return;
+                }
                 updateStats();
-                Thread.sleep(10);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 System.exit(1);

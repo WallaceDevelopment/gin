@@ -44,6 +44,9 @@ public abstract class GP extends Sampler {
 
     @Argument(alias = "is", description = "Random seed for individual selection")
     protected Integer individualSeed = 123;
+
+    @Argument(alias = "sh", description = "Randomize Unit Test Execution Order")
+    protected Boolean testShuffle = false;
     
     // Allowed edit types for sampling: parsed from editType
     protected List<Class<? extends Edit>> editTypes;

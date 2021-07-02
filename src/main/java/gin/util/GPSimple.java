@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.pmw.tinylog.Logger;
 
@@ -67,6 +68,10 @@ public abstract class GPSimple extends GP {
         String methodName = method.toString();
         List<UnitTest> tests = method.getGinTests();
 
+        if(testShuffle){
+            Collections.shuffle(tests);
+        }
+
         // Run original code
         UnitTestResultSet results = initFitness(className, tests, origPatch);
 
@@ -81,6 +86,8 @@ public abstract class GPSimple extends GP {
         Map<Patch, Double> population = new HashMap<>();
         population.put(origPatch, orig);
 
+        long startTime = System.currentTimeMillis();
+        System.out.println(" ");
         for (int i = 1; i < indNumber; i++) {
 
             // Add a mutation
@@ -90,7 +97,6 @@ public abstract class GPSimple extends GP {
             if (fitnessThreshold(results, orig)) {
                 population.put(patch, fitness(results));
             }
-
         }
 
         for (int g = 0; g < genNumber; g++) {
@@ -98,7 +104,8 @@ public abstract class GPSimple extends GP {
             // Previous generation
             List<Patch> patches = new ArrayList(population.keySet());
 
-            Logger.info("Creating generation: " + (g + 1));
+            System.out.println(" ");
+            Logger.info("Creating generation: " + (g + 1) + " \r");
 
             // Current generation
             Map<Patch, Double> newPopulation = new HashMap<>();
@@ -231,6 +238,5 @@ public abstract class GPSimple extends GP {
 
         return crossedPatches;
     }
-
 }
 
