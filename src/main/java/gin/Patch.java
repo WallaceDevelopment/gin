@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import com.sampullara.cli.Argument;
 import org.apache.commons.io.FileUtils;
 import org.pmw.tinylog.Logger;
 
@@ -60,6 +61,14 @@ public class Patch {
     public int size() {
         return this.edits.size();
     }
+
+
+    public void addAll(List<Edit> edits) {
+        for (Edit e : edits) {
+            add(e);
+        }
+    }
+
 
     public List<Edit> getEdits() {
         return this.edits;

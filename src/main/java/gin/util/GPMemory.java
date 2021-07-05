@@ -2,99 +2,37 @@ package gin.util;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
+
 
 import gin.Patch;
+import gin.test.MemoryProfiler2;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
 
 public class GPMemory extends GPSimple {
 
-    public static void main(String[] args) throws IOException {
+//    MemoryProfiler2 memoryProfiler2;
+//
+//    public MemoryProfiler2 getMemoryProfiler(){
+//        return memoryProfiler2;
+//    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
         GPMemory sampler = new GPMemory(args);
         sampler.sampleMethods();
     }
 
-    public GPMemory(String[] args) throws IOException {
+    public GPMemory(String[] args) throws IOException, InterruptedException {
         super(args);
 
-        long currentThreadProc = getProcessID();
-        Process p = Runtime.getRuntime().exec(String.format("jstat -gc %s%n 100", currentThreadProc));
-
-        Thread main_thread = Thread.currentThread();
-
-        Thread t = new Thread(new Runnable() {
-            final Scanner scanner = new Scanner(p.getInputStream());
-            File tmpFile = File.createTempFile("memory", ".tmp");
-            FileWriter writer = new FileWriter(tmpFile);
-
-            public boolean checkProcess(){
-                if (!main_thread.isAlive()){
-                    return false;
-                }
-                return true;
-            }
-
-            public void run() {
-                String line = null;
-
-                while(scanner.hasNextLine()){
-
-                    if (!checkProcess()){
-                        break;
-                    }
-                    System.out.println(scanner.nextLine());
-
-                    try {
-                        writer.write(scanner.nextLine());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-
-                scanner.close();
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
-        t.start();
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                if (p.isAlive()) {
-                    p.destroyForcibly();
-                }
-            }
-        });
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                if (t.isAlive()) {
-                    t.stop();
-                }
-            }
-        });
-
-
+//        Thread main_thread = Thread.currentThread();
+//        MemoryProfiler memoryProfiler = new MemoryProfiler(main_thread);
+//        Thread memoryProfilerThread = new Thread(memoryProfiler);
+//        memoryProfilerThread.start();
     }
 
-    private long getProcessID() {
-        // Get name representing the running Java virtual machine.
-        // It returns something like 6460@AURORA. Where the value
-        // before the @ symbol is the PID.
-        String jvmName = ManagementFactory.getRuntimeMXBean().getName();
-        // Extract the PID by splitting the string returned by the
-        // bean.getName() method.
-        long pid = Long.valueOf(jvmName.split("@")[0]);
-        return pid;
-    }
+
 
     /* ===== Implementing Abstract Methods ===== */
 

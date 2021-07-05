@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import com.sampullara.cli.Argument;
 import org.pmw.tinylog.Logger;
 
 import gin.Patch;
@@ -19,21 +19,24 @@ import gin.test.UnitTestResultSet;
 /**
  * Method-based GPSimple search.
  * Includes: implementation of tournament selection, uniform crossover, and random mutation operator selection
- * Roughly based on: "A systematic study of automated program repair: Fixing 55 out of 105 bugs for $8 each." 
+ * Roughly based on: "A systematic study of automated program repair: Fixing 55 out of 105 bugs for $8 each."
  * by Claire Le Goues, Michael Dewey-Vogt, Stephanie Forrest, Westley Weimer (ICSE 2012)
- * and its Java implementation at https://github.com/squaresLab/genprog4java 
+ * and its Java implementation at https://github.com/squaresLab/genprog4java
  */
 
 public abstract class GPSimple extends GP {
-    
+
     public GPSimple(String[] args) {
         super(args);
-    }   
+    }
 
     // Constructor used for testing
     public GPSimple(File projectDir, File methodFile) {
         super(projectDir, methodFile);
-    }   
+    }
+
+    @Argument(alias = "uc", description = "Crossover selection: uniform/concatenation")
+    protected String crossoverType = "concatenation";
 
     // Percentage of population size to be selected during tournament selection
     private static double tournamentPercentage = 0.2;
@@ -52,8 +55,8 @@ public abstract class GPSimple extends GP {
     // Calculate fitness threshold, for selection to the next generation
     @Override
     protected abstract boolean fitnessThreshold(UnitTestResultSet results, double orig);
-    
-     // Compare two fitness values, result of comparison > 0 if newFitness better than oldFitness
+
+    // Compare two fitness values, result of comparison > 0 if newFitness better than oldFitness
     @Override
     protected abstract double compareFitness(double newFitness, double oldFitness);
 
@@ -68,10 +71,6 @@ public abstract class GPSimple extends GP {
         String methodName = method.toString();
         List<UnitTest> tests = method.getGinTests();
 
-        if(testShuffle){
-            Collections.shuffle(tests);
-        }
-
         // Run original code
         UnitTestResultSet results = initFitness(className, tests, origPatch);
 
@@ -79,15 +78,13 @@ public abstract class GPSimple extends GP {
         double orig = fitness(results);
         super.writePatch(results, methodName, orig, 0);
 
-        // Keep best 
+        // Keep best
         double best = orig;
 
         // Generation 1
         Map<Patch, Double> population = new HashMap<>();
         population.put(origPatch, orig);
 
-        long startTime = System.currentTimeMillis();
-        System.out.println(" ");
         for (int i = 1; i < indNumber; i++) {
 
             // Add a mutation
@@ -97,6 +94,7 @@ public abstract class GPSimple extends GP {
             if (fitnessThreshold(results, orig)) {
                 population.put(patch, fitness(results));
             }
+
         }
 
         for (int g = 0; g < genNumber; g++) {
@@ -104,8 +102,7 @@ public abstract class GPSimple extends GP {
             // Previous generation
             List<Patch> patches = new ArrayList(population.keySet());
 
-            System.out.println(" ");
-            Logger.info("Creating generation: " + (g + 1) + " \r");
+            Logger.info("Creating generation: " + (g + 1));
 
             // Current generation
             Map<Patch, Double> newPopulation = new HashMap<>();
@@ -120,7 +117,7 @@ public abstract class GPSimple extends GP {
             while (crossoverPatches.size() < indNumber) {
                 crossoverPatches.add(patches.get(super.individualRng.nextInt(patches.size())).clone());
             }
-            
+
             // Mutate the newly created population and check fitness
             for (Patch patch : crossoverPatches) {
 
@@ -144,7 +141,7 @@ public abstract class GPSimple extends GP {
             if (population.isEmpty()) {
                 population.put(origPatch, orig);
             }
-            
+
         }
 
     }
@@ -211,23 +208,33 @@ public abstract class GPSimple extends GP {
             Patch child1 = origPatch.clone();
             Patch child2 = origPatch.clone();
 
-            for (int j = 0; j < list1.size(); j++) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child1.add(list1.get(j));
+            if (crossoverType.equals("uniform")) {
+                for (int j = 0; j < list1.size(); j++) {
+                    if (super.mutationRng.nextFloat() > mutateProbability) {
+                        child1.add(list1.get(j));
+                    }
                 }
-            }
-            for (int j = 0; j < list2.size(); j++) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child1.add(list2.get(j));
+                for (int j = 0; j < list2.size(); j++) {
+                    if (super.mutationRng.nextFloat() > mutateProbability) {
+                        child1.add(list2.get(j));
+                    }
+                    if (super.mutationRng.nextFloat() > mutateProbability) {
+                        child2.add(list2.get(j));
+                    }
                 }
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child2.add(list2.get(j));
+                for (int j = 0; j < list1.size(); j++) {
+                    if (super.mutationRng.nextFloat() > mutateProbability) {
+                        child2.add(list1.get(j));
+                    }
                 }
-            }
-            for (int j = 0; j < list1.size(); j++) {
-                if (super.mutationRng.nextFloat() > mutateProbability) {
-                    child2.add(list1.get(j));
-                }
+            } else if (crossoverType.equals("concatenation")){ // concatenate crossover
+                child1.addAll(list1);
+                child1.addAll(list2);
+                child2.addAll(list2);
+                child2.addAll(list1);
+            } else {
+                Logger.error("Unsupported crossover type selected. Terminating.");
+                System.exit(-1);
             }
 
             crossedPatches.add(parent1);
@@ -238,5 +245,6 @@ public abstract class GPSimple extends GP {
 
         return crossedPatches;
     }
+
 }
 
