@@ -1,5 +1,6 @@
 package gin.test;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Executable;
@@ -27,7 +28,7 @@ public class JUnitBridge {
      * @param rep the number of times to repeat the test
      * @return the test results
      */
-    public UnitTestResult runTest(UnitTest test, int rep) {
+    public UnitTestResult runTest(UnitTest test, int rep) throws IOException {
 
         UnitTestResult result = new UnitTestResult(test, rep);
 

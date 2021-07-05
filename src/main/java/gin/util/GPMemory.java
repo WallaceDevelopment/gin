@@ -6,6 +6,7 @@ import java.util.List;
 
 
 import gin.Patch;
+import gin.test.MemoryProfiler;
 import gin.test.MemoryProfiler2;
 import gin.test.UnitTest;
 import gin.test.UnitTestResultSet;
@@ -31,8 +32,6 @@ public class GPMemory extends GPSimple {
 //        Thread memoryProfilerThread = new Thread(memoryProfiler);
 //        memoryProfilerThread.start();
     }
-
-
 
     /* ===== Implementing Abstract Methods ===== */
 

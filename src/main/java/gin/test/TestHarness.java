@@ -71,7 +71,7 @@ public class TestHarness {
         }
 
     }
-    private String runTest(String command) throws ParseException {
+    private String runTest(String command) throws ParseException, IOException {
 
        String testName;
        Integer rep;
@@ -98,7 +98,7 @@ public class TestHarness {
 
     }
 
-    private UnitTestResult runTest(UnitTest test, int rep) {
+    private UnitTestResult runTest(UnitTest test, int rep) throws IOException {
 
         UnitTestResult result = new UnitTestResult(test, rep);
 
