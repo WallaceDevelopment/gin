@@ -26,7 +26,15 @@ public class MemoryProfiler implements Runnable {
     /* ======== Profiling Functions ======= */
 
     public synchronized double getAverage(){
-        return ((samples.stream().mapToDouble(d -> d).average().orElse(0.0)) * 1000);
+        synchronized (samples){
+
+            double sum = 0.0;
+            for (double sample : samples){
+                sum += sample;
+            }
+//            return ((samples.stream().mapToDouble(d -> d).average().orElse(0.0)) * 1000);
+            return (sum/samples.size());
+        }
     }
 
     public boolean checkProcess(){
@@ -36,19 +44,19 @@ public class MemoryProfiler implements Runnable {
         return true;
     }
 
-    public void resetStats(){
-        samples.clear();
+    public void resetStats() throws InterruptedException {
+        synchronized (samples){
+            samples.clear();
+//            Thread.sleep(10);
+        }
     }
 
     @Override
     public void run() {
-        try {
-            Thread.sleep(2500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Memory Profiler Called");
 
         while(checkProcess()){
+            System.out.println(memoryMXBean.getHeapMemoryUsage().getUsed());
             samples.add((double) memoryMXBean.getHeapMemoryUsage().getUsed());
             try {
                 Thread.sleep(1);

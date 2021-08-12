@@ -1,16 +1,8 @@
 package gin.test;
 
 import java.io.*;
-import java.lang.annotation.Annotation;
 import java.lang.management.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-import org.checkerframework.checker.units.qual.A;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -41,6 +33,8 @@ public class TestRunListener extends RunListener {
 
     private static final long MEGABYTE = 1024L * 1024L;
 
+    private MemoryProfiler memoryProfiler;
+
     public static long bytesToMegabytes(long bytes) {
         return bytes / MEGABYTE;
     }
@@ -58,6 +52,9 @@ public class TestRunListener extends RunListener {
 
     public TestRunListener(UnitTestResult unitTestResult) throws IOException {
         this.unitTestResult = unitTestResult;
+//        this.memoryProfiler = memoryProfiler;
+//        System.out.println(memoryProfiler.getAverage());
+
 
         // get memory profiler object here (passed into TestRunListener)
 
@@ -84,6 +81,16 @@ public class TestRunListener extends RunListener {
         unitTestResult.setExecutionTime(endTime - startTime);
         unitTestResult.setCPUTime(endCPUTime - startCPUTime);
         unitTestResult.setMemoryUsage(bytesToMegabytes(averageUsage));
+//        double profilerUsage = memoryProfiler.getAverage();
+//        if (Double.isNaN(profilerUsage)){
+//            unitTestResult.setMemoryUsage(averageUsage);
+//        } else {
+//            unitTestResult.setMemoryUsage((long) profilerUsage);
+//        }
+//
+//        System.out.printf("Average: %f", memoryProfiler.getAverage());
+//        System.out.println(Thread.activeCount());
+//        memoryProfiler.resetStats();
 
         // get average from all samples from memory profiler here
     }

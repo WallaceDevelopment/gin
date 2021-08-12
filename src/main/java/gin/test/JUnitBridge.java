@@ -76,6 +76,9 @@ public class JUnitBridge {
 
         JUnitCore jUnitCore = new JUnitCore();
 
+//        Thread main_thread = Thread.currentThread();
+//        MemoryProfiler memoryProfiler = new MemoryProfiler(main_thread);
+
         jUnitCore.addListener(new TestRunListener(result));
 
         try {
@@ -146,6 +149,4 @@ public class JUnitBridge {
         }        
 
     }
-
-
 }

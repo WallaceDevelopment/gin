@@ -71,6 +71,10 @@ public abstract class GPSimple extends GP {
         String methodName = method.toString();
         List<UnitTest> tests = method.getGinTests();
 
+        if (testShuffle){
+            Collections.shuffle(tests);
+        }
+
         // Run original code
         UnitTestResultSet results = initFitness(className, tests, origPatch);
 
@@ -86,6 +90,10 @@ public abstract class GPSimple extends GP {
         population.put(origPatch, orig);
 
         for (int i = 1; i < indNumber; i++) {
+
+            if (testShuffle){
+                Collections.shuffle(tests);
+            }
 
             // Add a mutation
             Patch patch = mutate(origPatch);

@@ -48,6 +48,7 @@ public class GPMemory extends GPSimple {
         // IF COMPILED AND TEST SUITE SUCCESS THEN
         // return weighted fitness for memory usage
         if (results.getCleanCompile() && results.allTestsSuccessful()) {
+            System.out.println((results.totalMemoryUsage() / 1000000));
             return (double) (results.totalMemoryUsage() / 1000000);
         }
         // else return default max value

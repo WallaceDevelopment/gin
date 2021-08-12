@@ -24,6 +24,8 @@ public class TestHarness {
     private BufferedReader in;
     public static final String PORT_PREFIX = "PORT";
 
+//    public MemoryProfiler memoryProfiler;
+
     public static void main(String[] args) {
         TestHarness testHarness= new TestHarness(args);
     }
@@ -34,6 +36,12 @@ public class TestHarness {
     }
 
     public void start() {
+
+//        Thread main_thread = Thread.currentThread();
+//        this.memoryProfiler = new MemoryProfiler(main_thread);
+//        Thread t = new Thread(memoryProfiler);
+//        t.start();
+
         try {
             serverSocket = new ServerSocket(0);
             int port = serverSocket.getLocalPort();
